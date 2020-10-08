@@ -1,0 +1,130 @@
+---
+title: "Homework: Data Visualization"
+author: "Oliver Titus"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(digits = 3)
+```
+
+```{r load-sas-libraries, echo = F, message = F, warning = F}
+
+library(SASmarkdown)
+sas_enginesetup(sashtml=sashtml)
+
+sasexe <- "C:/Program Files/SASHome/SASFoundation/9.4/sas.exe"
+sasopts <- "-nosplash -ls 75"
+
+# Linux options (for grading, please leave this in!)
+# sasexe <- "/usr/local/SASHome/SASFoundation/9.4/bin/sas_en"
+# sasopts <- "-ls 75"
+```
+
+## Instructions
+
+When you are finished with the assignment:
+
+1. Save the file as 08_Lastname_Firstname.Rmd and compile it
+2. Commit the Rmd file and corresponding html file to your homework git repo
+3. Push the commit to github
+4. Locate the Rmd file on github and click on the SHA link for the file
+5. Paste the url of the resulting page into Canvas to submit your assignment.
+
+Your assignment must compile on a different computer as long as the saspath is set correctly for that machine.
+This means you will need to use a local file path when you read the data in via R (and SAS).
+
+## Swiss Banknotes
+
+The R package `alr3` contains a data set called banknote, consisting of (physical) measurements on 200 Swiss bank notes, 100 of which are genuine, while the other half is counterfeit. Load this data set (you might have to install the package) using the code below. 
+
+```{r, echo = F}
+#install.packages("mclust")
+library(mclust)
+data(banknote)
+
+library(ggplot2)
+```
+
+For each of the three figures you create below, write a two-three sentence summary, describing the structure of the plot: what type of plot is it? Which variables are mapped to x, to y, and to the (fill) color? What is the main message of the plot: what is your main finding, i.e. what do you want viewers to learn from the plot? Are there any anomalies or outliers?
+
+1. Use one of the object inspecting functions and describe the data set - what do the variables appear to mean?
+```{r}
+head(banknote, 10)
+```
+The data set describes whether banknotes are counterfeit or genuine and appears gives the dimensions of each banknote.
+
+2. Use `ggplot2` to draw a barchart of Y (0 is genuine, 1 is counterfeit). Also, map Y to the fill color of the bars. (Yes, this plot is a bit simplistic, but what does it show?)
+```{r}
+ggplot(data=banknote, aes(y=Status, fill=Status)) + geom_bar() + coord_flip()
+```
+
+This is a bar plot with y being mapped to status as well as fill. We see there is 100 counterfeit banknotes and 100 genuine notes in the data set. 
+
+
+3. Use `ggplot2` to draw a histogram of one of the variables in the dataset that shows a distinction between genuine and counterfeit banknotes. Use fill color to show this difference. Choose the binwidth such that there are no gaps in the middle range of the histogram.
+```{r}
+ggplot(data=banknote, aes(y=Length, fill=Status)) + geom_histogram(bins = 15) + coord_flip()
+```
+
+This is a histogram of the length of the banknote (y being mapped to length) with the red color representing counterfeit banknotes and blue representing genuine (fill being mapped to Status). It appears that most genuine bills have length larger than 215 and most counterfeit bills have a length less than 215.
+
+4. Use `ggplot2` to draw a scatterplot of two (continuous) measurements, color by Y. Try to find a pair of measurements that provides as much separation as possible between the clusters of points for genuine and counterfeit banknotes.
+```{r}
+ggplot(data=banknote, aes(x=Length, y=Diagonal,colour=Status)) + geom_point()
+```
+
+The scatter plot above compares the banknote's length (x) and width (y) with color being mapped to status. We see that counterfeit banknotes have a diagonal of less than about 140.5 and genuine banknotes have a diagonal of more than about 140.5. The length doesn't appear to matter for counterfeit versus genuine banknotes.
+
+## Take everything you know, and use it for evil
+
+The textbook spent lots of time showing you how to create different types of graphics, but I spent a lot less time showing you all of the different ways you could customize graphics in both ggplot2 and SAS. In this problem, I want you to create the *ugliest* version of the following graphs you can, and then **explain why**, exactly, you made the decisions you did, and which principles of good graphics you've intentionally violated. 
+
+Ugliness is subjective, so the goal here is for you to explore the different ways you can customize the finer details of ggplot2 and SAS graphics. Make sure your finished masterpiece has appropriate axis labels and a title (after all, even ugly plots need to be correctly labeled!). You are free to add additional variables and layers, modify the aesthetics used, and leverage other packages. I have provided this code as a starting point, not as a way to limit your creativity. [If you need inspiration, look here.](https://www.allisonhorst.com/post/do-your-worst/)
+
+### Part 1: R
+I have provided some basic code to get you started. In R, we'll use the `palmerpenguins` package, which has [fantastic documentation with really awesome artwork](https://allisonhorst.github.io/palmerpenguins/). 
+
+```{r}
+if (!"palmerpenguins" %in% installed.packages()) {
+  remotes::install_github("allisonhorst/palmerpenguins")
+}
+library(palmerpenguins)
+library(ggplot2)
+
+head(penguins)
+
+ggplot(penguins, aes(x = body_mass_g, y = bill_length_mm)) + geom_point(color="yellow", size=4) + theme(panel.background = element_rect(fill="salmon"), panel.grid.major = element_line(colour = "blue", size=1.5), panel.grid.minor = element_line(colour = "green")) + ggtitle("Penguin Body Mass vs Bill Length") + xlab("Body Mass (g)") + ylab("Bill Length (mm)") 
+```
+
+This very ugly plot compares penguin body mass with its bill length. I added titles, changed the background to a horrible salmon color (my least favorite color), changed the color of the point to yellow (another color I don't like) and made the points larger, and changed the color of the major panel grid to blue and minor panel grid to green. This results in really ugly plot in my opinion that is a nightmare to look at and read. 
+
+### Part 2: SAS
+
+```{r, engine="sashtml", engine.path=sasexe, engine.opts=sasopts, collectcode = T, error = T}
+PROC PRINT data = sashelp.fish(obs=5);
+RUN;
+
+PROC SGPLOT data=sashelp.fish;
+title "Fish Weight vs Height";
+SCATTER x = Weight y = Height / Group = Species filledoutlinedmarkers 
+   markeroutlineattrs=(thickness=2)
+   markerattrs=(symbol=trianglefilled size=25 );
+styleattrs backcolor=cx987f00 
+wallcolor=cx4DFF00
+datacontrastcolors=(red green blue yellow orange brown);
+RUN;
+```
+
+This radically ugly plot looks at fish weight vs height for different species of fish. I changed the background color to a nasty brown color and the wall color to a horrible neon green. I also changed the points on the graph to big triangles for added ugliness and to make it harder to read. I also made it so that each point is a different color based on the species where the border of the triangle is a different color and the fill is a different shade of gray based on the species for added ugliness. 
+
+### Useful References
+
+- [Customizing ggplot2 graphics](http://r-statistics.co/Complete-Ggplot2-Tutorial-Part2-Customizing-Theme-With-R-Code.html)
+
+- [A group-created slideshow of awful graphics](https://docs.google.com/presentation/d/1ixRsGI8BWgT2zA5AbB61eMLUbJgObvBCZt-OnZDzvX4/edit?usp=sharing)
+
+- [PROC SGPLOT procedure options](https://documentation.sas.com/?docsetId=grstatproc&docsetTarget=p1lcbd3lhs3t3bn1jk6d8sjt2yqx.htm&docsetVersion=9.4&locale=en)
+
+
